@@ -273,7 +273,7 @@ if uploaded_file is not None:
             with col1:
                 # Export to JSON
                 if st.button("📥 Download as JSON"):
-                    json_str = json.dumps(results, indent=2)
+                    json_str = json.dumps(results, indent=2, default=str)
                     st.download_button(
                         label="Download JSON",
                         data=json_str,
@@ -293,6 +293,9 @@ if uploaded_file is not None:
                             file_name=f"recommendations_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                             mime="text/csv"
                         )
+    
+    except Exception as e:
+        st.error(f"File upload error: {str(e)}")
 
 else:
     # Empty state
