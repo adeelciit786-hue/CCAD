@@ -1,0 +1,12 @@
+Campaign report
+"September 1, 2025 - September 30, 2025"
+Campaign status,Campaign,Budget,Budget name,Budget type,Status,Status reasons,Optimization score,Campaign type,Impr.,Interactions,Interaction rate,Currency code,Avg. cost,Cost,Search impr. share,Search lost IS (rank),Search lost IS (budget),Bid strategy type,Participated in-app actions,Conv. rate,Conv. value,Conv. value / cost,Conversions,Cost / Participated in-app action,Cost / conv.,Original conv. value
+Enabled,Sales Search - Dry Cleaning,140.00, --,Daily,Eligible (Limited),limited by budget; unknown,97.26,Search,"2,283",439,19.23%,AED,2.77,1216.16,< 10%,65.10%,28.14%,Maximize Conversion Value (Target ROAS),0.00,6.38%,102.84,0.08,28.00,0,43.43,102.84
+Enabled,Website traffic-Search-2,170.00, --,Daily,Eligible (Limited),limited by budget; unknown,97.26,Search,"20,846","1,145",5.49%,AED,4.76,5451.43,< 10%,4.21%,86.69%,Maximize Conversion Value,0.00,12.85%,202.62,0.04,147.13,0,37.05,202.62
+Enabled,Performance Max #2,200.00, --,Daily,Eligible (Limited),limited by budget; unknown,88.77,Performance Max,"345,974","87,565",25.31%,AED,0.06,4948.53,< 10%,88.35%,4.20%,Maximize Conversion Value (Target ROAS),0.00,0.34%,359.38,0.07,294.33,0,16.81,359.38
+Enabled,App promotion for Android,140.00, --,Daily,Eligible (Limited),limited by budget; unknown,99.00,App,"229,377","3,162",1.38%,AED,0.82,2593.08, --, --, --,Maximize Conversions,0.00,19.96%,0.00,0.00,631.00,0,4.11,0.00
+Total: Campaigns, --, --, --, --, --,, --, --,"598,480","92,311",15.42%,AED,0.15,14209.21,< 10%,30.54%,60.99%, --,0,1.19%,664.84,0.05,"1,100.47",0,12.91,664.84
+Total: Account,,,,,,,,,"598,480","92,311",15.42%,AED,0.15,14209.21,< 10%,30.54%,60.99%,,,1.19%,664.84,0.05,"1,100.47",,12.91,664.84
+Total: Search,,,,,,,,Search,"23,129","1,584",6.85%,AED,4.21,6667.60,< 10%,12.23%,78.98%,,,11.06%,305.47,0.05,175.13,,38.07,305.47
+Total: App,,,,,,,,App,"229,377","3,162",1.38%,AED,0.82,2593.08, --, --, --,,,19.96%,0.00,0.00,631.00,,4.11,0.00
+Total: Performance Max,,,,,,,,Performance Max,"345,974","87,565",25.31%,AED,0.06,4948.53,< 10%,88.35%,4.20%,,,0.34%,359.38,0.07,294.33,,16.81,359.38

@@ -1,0 +1,26 @@
+date,campaign_name,campaign_type,impressions,clicks,cost,conversions,revenue,platform,device_os
+2025-12-01,Search_Brand,Search,15000,900,3000,45,9000,Search,Web
+2025-12-02,Search_Brand,Search,14800,870,2950,42,8400,Search,Web
+2025-12-03,Search_Brand,Search,16200,945,3100,48,9600,Search,Web
+2025-12-04,Search_Brand,Search,15500,920,3050,44,8800,Search,Web
+2025-12-05,Search_Brand,Search,14900,895,3000,43,8600,Search,Web
+2025-12-01,Search_Generic,Search,8000,320,2500,12,1440,Search,Web
+2025-12-02,Search_Generic,Search,7800,300,2400,10,1200,Search,Web
+2025-12-03,Search_Generic,Search,9200,380,2800,14,1680,Search,Web
+2025-12-04,Search_Generic,Search,8500,350,2600,13,1560,Search,Web
+2025-12-05,Search_Generic,Search,8200,330,2500,11,1320,Search,Web
+2025-12-01,PMax_General,PMax,25000,625,6000,18,2700,Display,Web
+2025-12-02,PMax_General,PMax,24500,610,5900,17,2550,Display,Web
+2025-12-03,PMax_General,PMax,26000,650,6200,19,2850,Display,Web
+2025-12-04,PMax_General,PMax,25500,640,6100,18,2700,Display,Web
+2025-12-05,PMax_General,PMax,24000,600,5800,16,2400,Display,Web
+2025-12-01,Android_App,Android App,12000,600,4000,24,3600,App,Android
+2025-12-02,Android_App,Android App,11800,590,3950,23,3450,App,Android
+2025-12-03,Android_App,Android App,13200,660,4200,26,3900,App,Android
+2025-12-04,Android_App,Android App,12500,625,4100,25,3750,App,Android
+2025-12-05,Android_App,Android App,12200,610,4000,24,3600,App,Android
+2025-12-01,iOS_App,iOS App,8000,560,3500,42,8400,App,iOS
+2025-12-02,iOS_App,iOS App,7900,550,3450,40,8000,App,iOS
+2025-12-03,iOS_App,iOS App,8300,580,3600,44,8800,App,iOS
+2025-12-04,iOS_App,iOS App,8100,570,3550,43,8600,App,iOS
+2025-12-05,iOS_App,iOS App,7800,545,3400,41,8200,App,iOS

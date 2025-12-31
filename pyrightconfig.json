@@ -1,0 +1,12 @@
+{
+  "typeCheckingMode": "basic",
+  "pythonVersion": "3.11",
+  "include": ["src", "keyword_engine_v2", "monthly_campaign_engine", "*.py"],
+  "exclude": ["**/__pycache__", "**/test_*.py"],
+  "extraPaths": [".", "src", "keyword_engine_v2", "monthly_campaign_engine"],
+  "reportMissingImports": false,
+  "reportUnresolvedImportWarning": false,
+  "reportOptionalMemberAccess": "information",
+  "reportOptionalSubscript": "information",
+  "reportConstantRedefinition": "information"
+}

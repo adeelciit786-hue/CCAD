@@ -1,0 +1,12 @@
+Campaign report
+"April 1, 2025 - April 30, 2025"
+Campaign status,Campaign,Budget,Budget name,Budget type,Status,Status reasons,Optimization score,Campaign type,Impr.,Interactions,Interaction rate,Currency code,Avg. cost,Cost,Search impr. share,Search lost IS (rank),Search lost IS (budget),Bid strategy type,Participated in-app actions,Conv. rate,Conv. value,Conv. value / cost,Conversions,Cost / Participated in-app action,Cost / conv.,Original conv. value
+Enabled,Sales Search - Dry Cleaning,140.00, --,Daily,Eligible (Limited),limited by budget; unknown,97.26,Search,"21,297","1,381",6.48%,AED,5.91,8166.29,10.76%,70.90%,18.34%,Maximize Conversion Value (Target ROAS),0.00,6.59%,334.25,0.04,91.00,0,89.74,334.25
+Enabled,Website traffic-Search-2,170.00, --,Daily,Eligible (Limited),limited by budget; unknown,97.26,Search,0,0, --,AED,0,0.00, --, --, --,Maximize Conversion Value,0.00,0.00%,0.00,0.00,0.00,0,0.00,0.00
+Enabled,Performance Max #2,200.00, --,Daily,Eligible (Limited),limited by budget; unknown,88.77,Performance Max,0,0, --,AED,0,0.00, --, --, --,Maximize Conversion Value (Target ROAS),0.00,0.00%,0.00,0.00,0.00,0,0.00,0.00
+Enabled,App promotion for Android,140.00, --,Daily,Eligible (Limited),limited by budget; unknown,99.00,App,"169,839","5,814",3.42%,AED,0.63,3647.66, --, --, --,Maximize Conversions,0.00,15.98%,0.00,0.00,929.00,0,3.93,0.00
+Total: Campaigns, --, --, --, --, --,, --, --,"191,136","7,195",3.76%,AED,1.64,11813.95,10.76%,70.90%,18.34%, --,0,14.18%,334.25,0.03,"1,020.00",0,11.58,334.25
+Total: Account,,,,,,,,,"216,214","9,533",4.41%,AED,1.56,14826.01,10.51%,73.54%,15.94%,,,11.01%,441.38,0.03,"1,049.17",,14.13,441.38
+Total: Search,,,,,,,,Search,"21,297","1,381",6.48%,AED,5.91,8166.29,10.76%,70.90%,18.34%,,,6.59%,334.25,0.04,91.00,,89.74,334.25
+Total: App,,,,,,,,App,"169,839","5,814",3.42%,AED,0.63,3647.66, --, --, --,,,15.98%,0.00,0.00,929.00,,3.93,0.00
+Total: Performance Max,,,,,,,,Performance Max,"25,078","2,338",9.32%,AED,1.29,3012.06,10.05%,78.48%,11.47%,,,1.25%,107.13,0.04,29.17,,103.27,107.13

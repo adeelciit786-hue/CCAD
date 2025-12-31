@@ -1,0 +1,32 @@
+campaign_name,ad_group_name,keyword,match_type,impressions,clicks,cost,conversions,revenue,quality_score
+DC_SEARCH_1,Premium Dry Cleaning,dry cleaning dubai,exact,4500,342,2150.00,18,5400.00,8
+LAUNDRY_SEARCH,Laundry Services,laundry service dubai,phrase,3200,156,980.00,8,2400.00,7
+EXPRESS,Same Day Express,express laundry,broad,2100,89,650.00,3,900.00,6
+CARPET_SEARCH,Carpet Cleaning,carpet cleaning dubai,exact,1800,92,580.00,4,1200.00,7
+CURTAIN_SEARCH,Curtain Cleaning,curtain cleaning dubai,phrase,950,38,320.00,2,600.00,6
+SOFA_SEARCH,Sofa Cleaning,sofa cleaning services,exact,1200,45,380.00,1,300.00,5
+CORPORATE,Business Services,corporate laundry service,exact,650,28,420.00,2,600.00,7
+DC_SEARCH_2,Premium Dry Cleaning,same-day dry cleaning,exact,580,42,290.00,3,900.00,8
+LAUNDRY_PREMIUM,Premium Laundry,premium laundry,phrase,420,19,180.00,1,300.00,6
+DC_SEARCH_1,Standard Dry Cleaning,dry clean near me,broad,3100,52,1850.00,1,300.00,4
+LAUNDRY_SEARCH,Standard Laundry,laundry pickup delivery,exact,310,18,150.00,1,300.00,7
+CARPET_SEARCH,Carpet Cleaning,carpet steam cleaning,phrase,890,32,280.00,1,300.00,6
+CURTAIN_SEARCH,Curtain Cleaning,curtain dry cleaning,exact,420,16,190.00,1,300.00,7
+CORPORATE,Business Services,office laundry service,phrase,280,12,210.00,1,300.00,7
+SOFA_SEARCH,Sofa Cleaning,upholstery cleaning dubai,phrase,680,18,320.00,0,0.00,5
+CARPET_SEARCH,Carpet Cleaning,rug cleaning services,broad,2200,45,1320.00,1,300.00,4
+DC_SEARCH_2,Premium Dry Cleaning,professional dry cleaning,phrase,1600,68,800.00,4,1200.00,7
+EXPRESS,Same Day Express,express laundry same day,exact,280,22,150.00,2,600.00,8
+LAUNDRY_SEARCH,Standard Laundry,white shirt laundry,exact,150,14,95.00,1,300.00,8
+SOFA_SEARCH,Sofa Cleaning,furniture cleaning dubai,broad,950,15,570.00,0,0.00,4
+SPECIAL_SERVICES,Special Services,wedding dress cleaning,exact,200,8,280.00,0,0.00,5
+CORPORATE,Business Services,business laundry service,exact,420,22,315.00,2,600.00,7
+ECO_CAMPAIGN,Eco Friendly,eco friendly laundry,phrase,180,6,140.00,0,0.00,4
+CARPET_SEARCH,Carpet Cleaning,carpet cleaning near me,broad,3500,52,2100.00,2,600.00,3
+CURTAIN_SEARCH,Curtain Cleaning,curtain washing service,broad,620,14,420.00,0,0.00,4
+SOFA_SEARCH,Sofa Cleaning,sofa steam cleaning,exact,380,18,240.00,1,300.00,7
+LAUNDRY_SEARCH,Standard Laundry,laundry ironing service,phrase,290,11,145.00,1,300.00,6
+DC_SPECIAL,Special Services,dry cleaning alterations,phrase,120,5,85.00,0,0.00,5
+DC_SEARCH_2,Premium Dry Cleaning,premium dry cleaning,exact,780,62,390.00,5,1500.00,8
+EXPRESS,Same Day Express,quick laundry service,phrase,420,19,280.00,1,300.00,6
+

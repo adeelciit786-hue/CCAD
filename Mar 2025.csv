@@ -1,0 +1,12 @@
+Campaign report
+"March 1, 2025 - March 31, 2025"
+Campaign status,Campaign,Budget,Budget name,Budget type,Status,Status reasons,Optimization score,Campaign type,Impr.,Interactions,Interaction rate,Currency code,Avg. cost,Cost,Search impr. share,Search lost IS (rank),Search lost IS (budget),Bid strategy type,Participated in-app actions,Conv. rate,Conv. value,Conv. value / cost,Conversions,Cost / Participated in-app action,Cost / conv.,Original conv. value
+Enabled,Performance Max #2,200.00, --,Daily,Eligible (Limited),limited by budget; unknown,88.77,Performance Max,0,0, --,AED,0,0.00, --, --, --,Maximize Conversion Value (Target ROAS),0.00,0.00%,0.00,0.00,0.00,0,0.00,0.00
+Enabled,App promotion for Android,140.00, --,Daily,Eligible (Limited),limited by budget; unknown,99.00,App,"203,615","5,588",2.74%,AED,0.64,3601.89, --, --, --,Maximize Conversions,0.00,15.03%,0.00,0.00,840.00,0,4.29,0.00
+Enabled,Sales Search - Dry Cleaning,140.00, --,Daily,Eligible (Limited),limited by budget; unknown,97.26,Search,"16,118","1,461",9.06%,AED,5.44,7948.54,< 10%,71.81%,18.89%,Maximize Conversion Value (Target ROAS),0.00,6.57%,352.59,0.04,96.00,0,82.80,352.59
+Enabled,Website traffic-Search-2,170.00, --,Daily,Eligible (Limited),limited by budget; unknown,97.26,Search,0,0, --,AED,0,0.00, --, --, --,Maximize Conversion Value,0.00,0.00%,0.00,0.00,0.00,0,0.00,0.00
+Total: Campaigns, --, --, --, --, --,, --, --,"219,733","7,049",3.21%,AED,1.64,11550.42,< 10%,71.81%,18.89%, --,0,13.28%,352.59,0.03,936.00,0,12.34,352.59
+Total: Account,,,,,,,,,"257,274","9,896",3.85%,AED,1.47,14587.41,< 10%,73.78%,16.63%,,,9.73%,451.76,0.03,963.00,,15.15,451.76
+Total: Performance Max,,,,,,,,Performance Max,"37,541","2,847",7.58%,AED,1.07,3036.98,10.35%,78.98%,10.67%,,,0.95%,99.17,0.03,27.00,,112.48,99.17
+Total: Search,,,,,,,,Search,"16,118","1,461",9.06%,AED,5.44,7948.54,< 10%,71.81%,18.89%,,,6.57%,352.59,0.04,96.00,,82.80,352.59
+Total: App,,,,,,,,App,"203,615","5,588",2.74%,AED,0.64,3601.89, --, --, --,,,15.03%,0.00,0.00,840.00,,4.29,0.00
