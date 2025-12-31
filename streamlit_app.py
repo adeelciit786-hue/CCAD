@@ -48,9 +48,15 @@ def convert_google_ads_keywords(df):
         if 'ad_group_name' not in df_converted.columns:
             df_converted['ad_group_name'] = 'Keyword Group'
         
+        # Keep only required columns
+        required_cols = ['campaign_name', 'ad_group_name', 'keyword', 'match_type', 'clicks', 'impressions', 'cost', 'conversions']
+        df_converted = df_converted[[col for col in required_cols if col in df_converted.columns]]
+        
         # Clean numeric columns
         for col in ['clicks', 'impressions', 'cost', 'conversions']:
             if col in df_converted.columns:
+                # Remove commas and convert to numeric
+                df_converted[col] = df_converted[col].astype(str).str.replace(',', '')
                 df_converted[col] = pd.to_numeric(df_converted[col], errors='coerce').fillna(0)
         
         return df_converted
@@ -457,7 +463,7 @@ else:
     
     with tab2:
         st.write("Upload your keywords CSV file")
-        st.info("📌 Supports both standard CSV format and Google Ads keyword reports (with headers)")
+        st.info("📌 Supports both standard CSV format and Google Ads keyword reports")
         uploaded_file = st.file_uploader("Choose CSV file", type=['csv'], key="keyword_upload")
         if uploaded_file is not None:
             if st.button("▶️ Run Keyword Analysis", key="keyword_upload_btn", use_container_width=True):
@@ -474,35 +480,43 @@ else:
                         
                         # Try to load the file
                         conversion_failed = False
-                        try:
-                            # First try standard format
-                            df = pd.read_csv(upload_path)
-                            
-                            # Check if it's Google Ads format (has header rows)
-                            if 'Keyword' in df.columns or 'Impr.' in df.columns:
-                                # It's Google Ads format
-                                df_converted = convert_google_ads_keywords(df)
-                                if df_converted is None:
-                                    st.error("Failed to convert Google Ads format")
-                                    conversion_failed = True
-                                else:
-                                    # Save converted file
-                                    df_converted.to_csv(upload_path, index=False)
-                        except Exception as e:
-                            # Try skipping header rows for Google Ads format
-                            try:
-                                df = pd.read_csv(upload_path, skiprows=2)
-                                df_converted = convert_google_ads_keywords(df)
-                                if df_converted is None:
-                                    st.error("Failed to convert Google Ads format")
-                                    conversion_failed = True
-                                else:
-                                    df_converted.to_csv(upload_path, index=False)
-                            except Exception as e2:
-                                st.error(f"Failed to read CSV: {str(e)}")
-                                conversion_failed = True
+                        df_loaded = None
                         
-                        if not conversion_failed:
+                        # Strategy 1: Try standard format
+                        try:
+                            df_loaded = pd.read_csv(upload_path)
+                        except Exception as e1:
+                            st.write(f"Standard format failed: {str(e1)}")
+                            
+                            # Strategy 2: Try skipping 2 rows (Google Ads format)
+                            try:
+                                df_loaded = pd.read_csv(upload_path, skiprows=2)
+                            except Exception as e2:
+                                st.write(f"Skiprows 2 failed: {str(e2)}")
+                                
+                                # Strategy 3: Try skipping 3 rows
+                                try:
+                                    df_loaded = pd.read_csv(upload_path, skiprows=3)
+                                except Exception as e3:
+                                    st.error(f"All parsing strategies failed. Last error: {str(e3)}")
+                                    conversion_failed = True
+                        
+                        if df_loaded is not None and not conversion_failed:
+                            # Check if it's Google Ads format
+                            if 'Keyword' in df_loaded.columns or 'Impr.' in df_loaded.columns:
+                                st.write("✅ Detected Google Ads format - converting...")
+                                df_converted = convert_google_ads_keywords(df_loaded)
+                                if df_converted is None:
+                                    conversion_failed = True
+                                else:
+                                    df_loaded = df_converted
+                            
+                            if not conversion_failed:
+                                # Save converted file
+                                df_loaded.to_csv(upload_path, index=False)
+                                st.write(f"✅ File loaded: {len(df_loaded)} keywords")
+                        
+                        if not conversion_failed and df_loaded is not None:
                             engine = KeywordIntelligenceEngine()
                             if engine.load_keywords(str(upload_path)):
                                 if engine.run_full_analysis():
@@ -510,9 +524,9 @@ else:
                                     st.session_state.keyword_results = results
                                     st.success("✅ Keyword analysis complete!")
                                 else:
-                                    st.error("Analysis failed - check file format")
+                                    st.error("Analysis failed during processing")
                             else:
-                                st.error("Failed to load keyword file - check CSV format and required columns")
+                                st.error("Failed to load keyword file after conversion")
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
                         import traceback
