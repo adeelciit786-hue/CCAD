@@ -64,6 +64,49 @@ def convert_google_ads_keywords(df):
         st.error(f"Error converting Google Ads format: {str(e)}")
         return None
 
+# Helper function to convert Google Ads campaign format to required format
+def convert_google_ads_campaigns(df):
+    """Convert Google Ads campaign report format to standard format."""
+    try:
+        # Mapping of Google Ads campaign columns to required columns
+        column_mapping = {
+            'Campaign': 'campaign_name',
+            'Campaign type': 'campaign_type',
+            'Impr.': 'impressions',
+            'Interactions': 'clicks',
+            'Cost': 'cost',
+            'Conversions': 'conversions'
+        }
+        
+        # Rename columns
+        df_converted = df.copy()
+        for old_col, new_col in column_mapping.items():
+            if old_col in df_converted.columns:
+                df_converted.rename(columns={old_col: new_col}, inplace=True)
+        
+        # Add date column if missing (use report date or default)
+        if 'date' not in df_converted.columns:
+            df_converted['date'] = pd.Timestamp.now().strftime('%Y-%m-%d')
+        
+        # Keep only required columns
+        required_cols = ['date', 'campaign_name', 'campaign_type', 'clicks', 'impressions', 'cost', 'conversions']
+        df_converted = df_converted[[col for col in required_cols if col in df_converted.columns]]
+        
+        # Clean numeric columns - remove commas and convert
+        for col in ['clicks', 'impressions', 'cost', 'conversions']:
+            if col in df_converted.columns:
+                df_converted[col] = df_converted[col].astype(str).str.replace(',', '')
+                df_converted[col] = pd.to_numeric(df_converted[col], errors='coerce').fillna(0)
+        
+        # Remove totals rows (any row where campaign_name contains "Total")
+        if 'campaign_name' in df_converted.columns:
+            df_converted = df_converted[~df_converted['campaign_name'].astype(str).str.contains('Total', case=False, na=False)]
+        
+        return df_converted
+    except Exception as e:
+        st.error(f"Error converting Google Ads campaign format: {str(e)}")
+        return None
+
 # Configure page
 st.set_page_config(
     page_title="Champion Cleaners - Google Ads Bot",
@@ -152,6 +195,7 @@ if st.session_state.analysis_type == 'campaign':
     
     with tab2:
         st.write("Upload your CSV file for analysis")
+        st.info("📌 Supports both standard CSV format and Google Ads campaign reports")
         uploaded_file = st.file_uploader("Choose CSV file", type=['csv'], key="campaign_upload")
         if uploaded_file is not None:
             if st.button("▶️ Run Analysis", key="campaign_upload_btn", use_container_width=True):
@@ -165,14 +209,53 @@ if st.session_state.analysis_type == 'campaign':
                         with open(upload_path, 'wb') as f:
                             f.write(content)
                         
-                        bot = ChampionCleanersBot(str(upload_path), use_emojis=False)
-                        results = bot.run_analysis(verbose=False)
+                        # Try to load the file
+                        conversion_failed = False
+                        df_loaded = None
                         
-                        if results:
-                            st.session_state.campaign_results = results
-                            st.success("✅ Analysis complete!")
-                        else:
-                            st.error("Analysis failed - check CSV file format and required columns")
+                        # Strategy 1: Try standard format
+                        try:
+                            df_loaded = pd.read_csv(upload_path)
+                        except Exception as e1:
+                            st.write(f"Standard format failed: {str(e1)}")
+                            
+                            # Strategy 2: Try skipping 2 rows (Google Ads format)
+                            try:
+                                df_loaded = pd.read_csv(upload_path, skiprows=2)
+                            except Exception as e2:
+                                st.write(f"Skiprows 2 failed: {str(e2)}")
+                                
+                                # Strategy 3: Try skipping 3 rows
+                                try:
+                                    df_loaded = pd.read_csv(upload_path, skiprows=3)
+                                except Exception as e3:
+                                    st.error(f"All parsing strategies failed. Last error: {str(e3)}")
+                                    conversion_failed = True
+                        
+                        if df_loaded is not None and not conversion_failed:
+                            # Check if it's Google Ads campaign format
+                            if 'Campaign' in df_loaded.columns or 'Impr.' in df_loaded.columns:
+                                st.write("✅ Detected Google Ads campaign format - converting...")
+                                df_converted = convert_google_ads_campaigns(df_loaded)
+                                if df_converted is None:
+                                    conversion_failed = True
+                                else:
+                                    df_loaded = df_converted
+                            
+                            if not conversion_failed:
+                                # Save converted file
+                                df_loaded.to_csv(upload_path, index=False)
+                                st.write(f"✅ File loaded: {len(df_loaded)} campaigns")
+                        
+                        if not conversion_failed and df_loaded is not None:
+                            bot = ChampionCleanersBot(str(upload_path), use_emojis=False)
+                            results = bot.run_analysis(verbose=False)
+                            
+                            if results:
+                                st.session_state.campaign_results = results
+                                st.success("✅ Analysis complete!")
+                            else:
+                                st.error("Analysis failed - check file format and data")
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
                         import traceback
