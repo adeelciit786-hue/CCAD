@@ -117,15 +117,24 @@ if st.session_state.analysis_type == 'campaign':
                     try:
                         upload_path = Path(__file__).parent / 'uploads' / uploaded_file.name
                         upload_path.parent.mkdir(exist_ok=True)
+                        
+                        # Save file with proper encoding
+                        content = uploaded_file.read()
                         with open(upload_path, 'wb') as f:
-                            f.write(uploaded_file.getbuffer())
+                            f.write(content)
                         
                         bot = ChampionCleanersBot(str(upload_path), use_emojis=False)
                         results = bot.run_analysis(verbose=False)
-                        st.session_state.campaign_results = results
-                        st.success("✅ Analysis complete!")
+                        
+                        if results:
+                            st.session_state.campaign_results = results
+                            st.success("✅ Analysis complete!")
+                        else:
+                            st.error("Analysis failed - check CSV file format and required columns")
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
+                        import traceback
+                        st.write(traceback.format_exc())
     
     # Display results
     if st.session_state.campaign_results:
@@ -395,16 +404,20 @@ else:
                     if sample_path.exists():
                         engine = KeywordIntelligenceEngine()
                         if engine.load_keywords(str(sample_path)):
-                            engine.run_full_analysis()
-                            results = engine.get_results_summary()
-                            st.session_state.keyword_results = results
-                            st.success("✅ Keyword analysis complete!")
+                            if engine.run_full_analysis():
+                                results = engine.get_results_summary()
+                                st.session_state.keyword_results = results
+                                st.success("✅ Keyword analysis complete!")
+                            else:
+                                st.error("Analysis failed - check file format")
                         else:
-                            st.error("Failed to load sample keywords")
+                            st.error("Failed to load sample keywords - check file format")
                     else:
                         st.error("Sample keywords file not found")
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
+                    import traceback
+                    st.write(traceback.format_exc())
     
     with tab2:
         st.write("Upload your keywords CSV file")
@@ -413,21 +426,29 @@ else:
             if st.button("▶️ Run Keyword Analysis", key="keyword_upload_btn", use_container_width=True):
                 with st.spinner("Analyzing keywords..."):
                     try:
+                        # Save uploaded file with proper handling
                         upload_path = Path(__file__).parent / 'uploads' / uploaded_file.name
                         upload_path.parent.mkdir(exist_ok=True)
+                        
+                        # Read and save the file with UTF-8 encoding
+                        content = uploaded_file.read()
                         with open(upload_path, 'wb') as f:
-                            f.write(uploaded_file.getbuffer())
+                            f.write(content)
                         
                         engine = KeywordIntelligenceEngine()
                         if engine.load_keywords(str(upload_path)):
-                            engine.run_full_analysis()
-                            results = engine.get_results_summary()
-                            st.session_state.keyword_results = results
-                            st.success("✅ Keyword analysis complete!")
+                            if engine.run_full_analysis():
+                                results = engine.get_results_summary()
+                                st.session_state.keyword_results = results
+                                st.success("✅ Keyword analysis complete!")
+                            else:
+                                st.error("Analysis failed - check file format")
                         else:
-                            st.error("Failed to load keyword file")
+                            st.error("Failed to load keyword file - check CSV format and required columns")
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
+                        import traceback
+                        st.write(traceback.format_exc())
     
     # Display results
     if st.session_state.keyword_results:
