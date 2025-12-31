@@ -22,7 +22,18 @@ except ImportError as e:
     st.error(f"Error loading modules: {e}")
     sys.exit(1)
 
-# Helper function to convert Google Ads keyword format to required format
+# Helper function to convert values to Excel-compatible format
+def to_excel_value(val):
+    """Convert Python/numpy/pandas values to Excel-compatible format."""
+    if val is None:
+        return ""
+    if isinstance(val, (np.integer, np.floating)):
+        return float(val) if isinstance(val, np.floating) else int(val)
+    if isinstance(val, (pd.Timestamp, pd.Timedelta)):
+        return str(val)
+    if isinstance(val, (list, dict)):
+        return str(val)
+    return val
 def convert_google_ads_keywords(df):
     """Convert Google Ads keyword report format to standard format."""
     try:
@@ -494,8 +505,8 @@ if st.session_state.analysis_type == 'campaign':
                 if 'data_summary' in results:
                     summary = results['data_summary']
                     for key, value in summary.items():
-                        ws_summary[f'A{row}'] = key.replace('_', ' ').title()
-                        ws_summary[f'B{row}'] = value
+                        ws_summary[f'A{row}'] = str(key).replace('_', ' ').title()
+                        ws_summary[f'B{row}'] = to_excel_value(value)
                         row += 1
                 
                 # Recommendations sheet
@@ -510,10 +521,10 @@ if st.session_state.analysis_type == 'campaign':
                         cell.font = header_font
                     
                     for row_num, rec in enumerate(results['recommendations'], 2):
-                        ws_rec.cell(row=row_num, column=1).value = rec.get('campaign_name', '')
-                        ws_rec.cell(row=row_num, column=2).value = rec.get('issue_detected', '')
-                        ws_rec.cell(row=row_num, column=3).value = rec.get('recommendation', '')
-                        ws_rec.cell(row=row_num, column=4).value = rec.get('confidence_level', '')
+                        ws_rec.cell(row=row_num, column=1).value = to_excel_value(rec.get('campaign_name', ''))
+                        ws_rec.cell(row=row_num, column=2).value = to_excel_value(rec.get('issue_detected', ''))
+                        ws_rec.cell(row=row_num, column=3).value = to_excel_value(rec.get('recommendation', ''))
+                        ws_rec.cell(row=row_num, column=4).value = to_excel_value(rec.get('confidence_level', ''))
                 
                 # Issues sheet
                 if 'detected_issues' in results:
@@ -527,9 +538,9 @@ if st.session_state.analysis_type == 'campaign':
                         cell.font = header_font
                     
                     for row_num, issue in enumerate(results['detected_issues'], 2):
-                        ws_issues.cell(row=row_num, column=1).value = issue.get('campaign', '')
-                        ws_issues.cell(row=row_num, column=2).value = issue.get('severity', '')
-                        ws_issues.cell(row=row_num, column=3).value = issue.get('description', '')
+                        ws_issues.cell(row=row_num, column=1).value = to_excel_value(issue.get('campaign', ''))
+                        ws_issues.cell(row=row_num, column=2).value = to_excel_value(issue.get('severity', ''))
+                        ws_issues.cell(row=row_num, column=3).value = to_excel_value(issue.get('description', ''))
                 
                 # Save to bytes
                 from io import BytesIO
@@ -543,6 +554,53 @@ if st.session_state.analysis_type == 'campaign':
                     file_name=f"analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
+                
+                # Recommendations-only download
+                if results.get('campaign_recommendations'):
+                    try:
+                        from openpyxl import Workbook
+                        from openpyxl.styles import PatternFill, Font
+                        
+                        wb_recs = Workbook()
+                        wb_recs.remove(wb_recs.active)
+                        
+                        # Create Recommendations sheet
+                        ws_recs = wb_recs.create_sheet('Recommendations')
+                        headers = ['Campaign', 'Issue', 'Recommendation', 'Confidence']
+                        header_fill = PatternFill(start_color="667eea", end_color="667eea", fill_type="solid")
+                        header_font = Font(bold=True, color="FFFFFF")
+                        
+                        for col, header in enumerate(headers, 1):
+                            cell = ws_recs.cell(row=1, column=col)
+                            cell.value = header
+                            cell.fill = header_fill
+                            cell.font = header_font
+                        
+                        for row_num, rec in enumerate(results['campaign_recommendations'], 2):
+                            ws_recs.cell(row=row_num, column=1).value = to_excel_value(rec.get('campaign_name', ''))
+                            ws_recs.cell(row=row_num, column=2).value = to_excel_value(rec.get('issue_detected', ''))
+                            ws_recs.cell(row=row_num, column=3).value = to_excel_value(rec.get('recommendation', ''))
+                            ws_recs.cell(row=row_num, column=4).value = to_excel_value(rec.get('confidence_level', ''))
+                        
+                        # Auto-fit columns
+                        for col in ws_recs.columns:
+                            ws_recs.column_dimensions[col[0].column_letter].width = 25
+                        
+                        # Save to bytes
+                        output_recs = BytesIO()
+                        wb_recs.save(output_recs)
+                        output_recs.seek(0)
+                        
+                        st.download_button(
+                            label="💡 Download Recommendations",
+                            data=output_recs.getvalue(),
+                            file_name=f"recommendations_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            key="download_recs"
+                        )
+                    except Exception as e:
+                        st.warning(f"Could not generate recommendations download: {str(e)}")
+                        
             except ImportError:
                 st.error("Excel export requires openpyxl package")
 
@@ -849,11 +907,11 @@ else:
                         cell.font = header_font
                     
                     for row_idx, item in enumerate(results.get('audit', [])[:100], 2):
-                        ws.cell(row=row_idx, column=1).value = item.get('keyword', '')
-                        ws.cell(row=row_idx, column=2).value = item.get('campaign', '')
-                        ws.cell(row=row_idx, column=3).value = item.get('issue_type', '')
-                        ws.cell(row=row_idx, column=4).value = item.get('severity', '')
-                        ws.cell(row=row_idx, column=5).value = item.get('value', '')
+                        ws.cell(row=row_idx, column=1).value = to_excel_value(item.get('keyword', ''))
+                        ws.cell(row=row_idx, column=2).value = to_excel_value(item.get('campaign', ''))
+                        ws.cell(row=row_idx, column=3).value = to_excel_value(item.get('issue_type', ''))
+                        ws.cell(row=row_idx, column=4).value = to_excel_value(item.get('severity', ''))
+                        ws.cell(row=row_idx, column=5).value = to_excel_value(item.get('value', ''))
                 
                 # Lost Searches sheet
                 if results.get('lost_searches'):
@@ -866,11 +924,11 @@ else:
                         cell.font = header_font
                     
                     for row_idx, item in enumerate(results.get('lost_searches', [])[:100], 2):
-                        ws.cell(row=row_idx, column=1).value = item.get('keyword', '')
-                        ws.cell(row=row_idx, column=2).value = item.get('campaign', '')
-                        ws.cell(row=row_idx, column=3).value = item.get('match_type', '')
-                        ws.cell(row=row_idx, column=4).value = item.get('loss_type', '')
-                        ws.cell(row=row_idx, column=5).value = item.get('potential_searches_lost', 0)
+                        ws.cell(row=row_idx, column=1).value = to_excel_value(item.get('keyword', ''))
+                        ws.cell(row=row_idx, column=2).value = to_excel_value(item.get('campaign', ''))
+                        ws.cell(row=row_idx, column=3).value = to_excel_value(item.get('match_type', ''))
+                        ws.cell(row=row_idx, column=4).value = to_excel_value(item.get('loss_type', ''))
+                        ws.cell(row=row_idx, column=5).value = to_excel_value(item.get('potential_searches_lost', 0))
                 
                 # Match Recommendations sheet
                 if results.get('match_recommendations'):
@@ -883,13 +941,13 @@ else:
                         cell.font = header_font
                     
                     for row_idx, item in enumerate(results.get('match_recommendations', [])[:100], 2):
-                        ws.cell(row=row_idx, column=1).value = item.get('keyword', '')
-                        ws.cell(row=row_idx, column=2).value = item.get('campaign', '')
-                        ws.cell(row=row_idx, column=3).value = item.get('current_match_type', '')
-                        ws.cell(row=row_idx, column=4).value = item.get('recommended_match_type', '')
-                        ws.cell(row=row_idx, column=5).value = item.get('reason', '')
-                        ws.cell(row=row_idx, column=6).value = item.get('expected_impact', '')
-                        ws.cell(row=row_idx, column=7).value = item.get('confidence', '')
+                        ws.cell(row=row_idx, column=1).value = to_excel_value(item.get('keyword', ''))
+                        ws.cell(row=row_idx, column=2).value = to_excel_value(item.get('campaign', ''))
+                        ws.cell(row=row_idx, column=3).value = to_excel_value(item.get('current_match_type', ''))
+                        ws.cell(row=row_idx, column=4).value = to_excel_value(item.get('recommended_match_type', ''))
+                        ws.cell(row=row_idx, column=5).value = to_excel_value(item.get('reason', ''))
+                        ws.cell(row=row_idx, column=6).value = to_excel_value(item.get('expected_impact', ''))
+                        ws.cell(row=row_idx, column=7).value = to_excel_value(item.get('confidence', ''))
                 
                 # Recommendations sheet
                 if results.get('recommendations'):
@@ -902,10 +960,10 @@ else:
                         cell.font = header_font
                     
                     for row_idx, item in enumerate(results.get('recommendations', [])[:100], 2):
-                        ws.cell(row=row_idx, column=1).value = item.get('keyword', '')
-                        ws.cell(row=row_idx, column=2).value = item.get('priority', '')
-                        ws.cell(row=row_idx, column=3).value = item.get('problem', '')
-                        ws.cell(row=row_idx, column=4).value = item.get('action', '')
+                        ws.cell(row=row_idx, column=1).value = to_excel_value(item.get('keyword', ''))
+                        ws.cell(row=row_idx, column=2).value = to_excel_value(item.get('priority', ''))
+                        ws.cell(row=row_idx, column=3).value = to_excel_value(item.get('problem', ''))
+                        ws.cell(row=row_idx, column=4).value = to_excel_value(item.get('action', ''))
                 
                 # Save to bytes
                 from io import BytesIO
