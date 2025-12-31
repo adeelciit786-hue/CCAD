@@ -22,6 +22,42 @@ except ImportError as e:
     st.error(f"Error loading modules: {e}")
     sys.exit(1)
 
+# Helper function to convert Google Ads keyword format to required format
+def convert_google_ads_keywords(df):
+    """Convert Google Ads keyword report format to standard format."""
+    try:
+        # Mapping of Google Ads columns to required columns
+        column_mapping = {
+            'Keyword': 'keyword',
+            'Match type': 'match_type',
+            'Clicks': 'clicks',
+            'Impr.': 'impressions',
+            'Cost': 'cost',
+            'Conversions': 'conversions'
+        }
+        
+        # Rename columns
+        df_converted = df.copy()
+        for old_col, new_col in column_mapping.items():
+            if old_col in df_converted.columns:
+                df_converted.rename(columns={old_col: new_col}, inplace=True)
+        
+        # Add required columns if missing
+        if 'campaign_name' not in df_converted.columns:
+            df_converted['campaign_name'] = 'Keywords Report'
+        if 'ad_group_name' not in df_converted.columns:
+            df_converted['ad_group_name'] = 'Keyword Group'
+        
+        # Clean numeric columns
+        for col in ['clicks', 'impressions', 'cost', 'conversions']:
+            if col in df_converted.columns:
+                df_converted[col] = pd.to_numeric(df_converted[col], errors='coerce').fillna(0)
+        
+        return df_converted
+    except Exception as e:
+        st.error(f"Error converting Google Ads format: {str(e)}")
+        return None
+
 # Configure page
 st.set_page_config(
     page_title="Champion Cleaners - Google Ads Bot",
@@ -421,6 +457,7 @@ else:
     
     with tab2:
         st.write("Upload your keywords CSV file")
+        st.info("📌 Supports both standard CSV format and Google Ads keyword reports (with headers)")
         uploaded_file = st.file_uploader("Choose CSV file", type=['csv'], key="keyword_upload")
         if uploaded_file is not None:
             if st.button("▶️ Run Keyword Analysis", key="keyword_upload_btn", use_container_width=True):
@@ -435,16 +472,47 @@ else:
                         with open(upload_path, 'wb') as f:
                             f.write(content)
                         
-                        engine = KeywordIntelligenceEngine()
-                        if engine.load_keywords(str(upload_path)):
-                            if engine.run_full_analysis():
-                                results = engine.get_results_summary()
-                                st.session_state.keyword_results = results
-                                st.success("✅ Keyword analysis complete!")
+                        # Try to load the file
+                        conversion_failed = False
+                        try:
+                            # First try standard format
+                            df = pd.read_csv(upload_path)
+                            
+                            # Check if it's Google Ads format (has header rows)
+                            if 'Keyword' in df.columns or 'Impr.' in df.columns:
+                                # It's Google Ads format
+                                df_converted = convert_google_ads_keywords(df)
+                                if df_converted is None:
+                                    st.error("Failed to convert Google Ads format")
+                                    conversion_failed = True
+                                else:
+                                    # Save converted file
+                                    df_converted.to_csv(upload_path, index=False)
+                        except Exception as e:
+                            # Try skipping header rows for Google Ads format
+                            try:
+                                df = pd.read_csv(upload_path, skiprows=2)
+                                df_converted = convert_google_ads_keywords(df)
+                                if df_converted is None:
+                                    st.error("Failed to convert Google Ads format")
+                                    conversion_failed = True
+                                else:
+                                    df_converted.to_csv(upload_path, index=False)
+                            except Exception as e2:
+                                st.error(f"Failed to read CSV: {str(e)}")
+                                conversion_failed = True
+                        
+                        if not conversion_failed:
+                            engine = KeywordIntelligenceEngine()
+                            if engine.load_keywords(str(upload_path)):
+                                if engine.run_full_analysis():
+                                    results = engine.get_results_summary()
+                                    st.session_state.keyword_results = results
+                                    st.success("✅ Keyword analysis complete!")
+                                else:
+                                    st.error("Analysis failed - check file format")
                             else:
-                                st.error("Analysis failed - check file format")
-                        else:
-                            st.error("Failed to load keyword file - check CSV format and required columns")
+                                st.error("Failed to load keyword file - check CSV format and required columns")
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
                         import traceback
