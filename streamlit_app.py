@@ -394,10 +394,13 @@ else:
                     sample_path = Path(__file__).parent / 'sample_keywords.csv'
                     if sample_path.exists():
                         engine = KeywordIntelligenceEngine()
-                        df = pd.read_csv(sample_path)
-                        results = engine.analyze_keywords(df)
-                        st.session_state.keyword_results = results
-                        st.success("✅ Keyword analysis complete!")
+                        if engine.load_keywords(str(sample_path)):
+                            engine.run_full_analysis()
+                            results = engine.get_results_summary()
+                            st.session_state.keyword_results = results
+                            st.success("✅ Keyword analysis complete!")
+                        else:
+                            st.error("Failed to load sample keywords")
                     else:
                         st.error("Sample keywords file not found")
                 except Exception as e:
@@ -410,11 +413,19 @@ else:
             if st.button("▶️ Run Keyword Analysis", key="keyword_upload_btn", use_container_width=True):
                 with st.spinner("Analyzing keywords..."):
                     try:
-                        df = pd.read_csv(uploaded_file)
+                        upload_path = Path(__file__).parent / 'uploads' / uploaded_file.name
+                        upload_path.parent.mkdir(exist_ok=True)
+                        with open(upload_path, 'wb') as f:
+                            f.write(uploaded_file.getbuffer())
+                        
                         engine = KeywordIntelligenceEngine()
-                        results = engine.analyze_keywords(df)
-                        st.session_state.keyword_results = results
-                        st.success("✅ Keyword analysis complete!")
+                        if engine.load_keywords(str(upload_path)):
+                            engine.run_full_analysis()
+                            results = engine.get_results_summary()
+                            st.session_state.keyword_results = results
+                            st.success("✅ Keyword analysis complete!")
+                        else:
+                            st.error("Failed to load keyword file")
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
     
@@ -424,95 +435,273 @@ else:
         st.markdown("---")
         st.subheader("📊 Keyword Analysis Results")
         
-        # Overview metrics
+        # Summary metrics
+        summary = results.get('summary', {})
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("Total Keywords", len(results.get('all_keywords', [])))
+            st.metric("Total Keywords", summary.get('total_keywords', 0))
         with col2:
-            st.metric("Recommendations", len(results.get('recommendations', [])))
+            st.metric("Keywords with Issues", summary.get('keywords_with_issues', 0))
         with col3:
-            avg_roi = np.mean([r.get('estimated_roi', 0) for r in results.get('recommendations', [])]) if results.get('recommendations') else 0
-            st.metric("Avg ROI", f"{avg_roi:.0f}%")
+            st.metric("Lost Opportunities", summary.get('lost_search_opportunities', 0))
         with col4:
-            total_revenue = sum([r.get('monthly_revenue_impact', 0) for r in results.get('recommendations', [])])
-            st.metric("Revenue Impact", f"AED {total_revenue:,.0f}")
+            st.metric("New Keywords to Add", summary.get('new_keywords_suggested', 0))
         
         st.markdown("---")
         
-        # Recommendations table
-        st.subheader("🎯 Top Recommendations")
-        if 'recommendations' in results and results['recommendations']:
-            rec_data = []
-            for i, rec in enumerate(results['recommendations'][:10], 1):
-                rec_data.append({
-                    "#": i,
-                    "Recommendation": rec.get('recommendation', 'N/A')[:60],
-                    "ROI %": f"{rec.get('estimated_roi', 0):.0f}%",
-                    "Revenue AED": f"{rec.get('monthly_revenue_impact', 0):,.0f}",
-                    "Conversions": f"+{rec.get('conversions_impact', 0)}",
-                    "Savings AED": f"{rec.get('cost_savings', 0):,.0f}"
-                })
-            
-            rec_df = pd.DataFrame(rec_data)
-            st.dataframe(rec_df, use_container_width=True, hide_index=True)
+        # Results tabs
+        kw_tab1, kw_tab2, kw_tab3, kw_tab4, kw_tab5, kw_tab6 = st.tabs([
+            "Summary",
+            "Keyword Audit",
+            "Lost Searches",
+            "Match Types",
+            "Alignment",
+            "Recommendations"
+        ])
+        
+        # Summary Tab
+        with kw_tab1:
+            st.write("### Summary Overview")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total Keywords", summary.get('total_keywords', 0))
+            with col2:
+                st.metric("Match Type Recommendations", summary.get('match_type_conversions_recommended', 0))
+            with col3:
+                st.metric("Total Recommendations", summary.get('total_recommendations', 0))
+        
+        # Keyword Audit Tab
+        with kw_tab2:
+            st.write("### Keyword Health Audit Issues")
+            audit = results.get('audit', [])
+            if audit and isinstance(audit, list):
+                audit_data = []
+                for issue in audit[:20]:
+                    audit_data.append({
+                        'Keyword': issue.get('keyword', 'N/A'),
+                        'Campaign': issue.get('campaign', 'N/A'),
+                        'Issue Type': issue.get('issue_type', 'N/A'),
+                        'Severity': issue.get('severity', 'N/A'),
+                        'Value': str(issue.get('value', 'N/A'))
+                    })
+                if audit_data:
+                    audit_df = pd.DataFrame(audit_data)
+                    st.dataframe(audit_df, use_container_width=True, hide_index=True)
+            else:
+                st.info("No audit issues found")
+        
+        # Lost Searches Tab
+        with kw_tab3:
+            st.write("### Lost Search Opportunities")
+            lost = results.get('lost_searches', [])
+            if lost and isinstance(lost, list):
+                lost_data = []
+                for item in lost[:20]:
+                    lost_data.append({
+                        'Keyword': item.get('keyword', 'N/A'),
+                        'Campaign': item.get('campaign', 'N/A'),
+                        'Match Type': item.get('match_type', 'N/A'),
+                        'Loss Type': item.get('loss_type', 'N/A'),
+                        'Lost Searches': item.get('potential_searches_lost', 0),
+                        'Recommendation': item.get('recommendation', 'N/A')[:50]
+                    })
+                if lost_data:
+                    lost_df = pd.DataFrame(lost_data)
+                    st.dataframe(lost_df, use_container_width=True, hide_index=True)
+            else:
+                st.info("No lost search opportunities found")
+        
+        # Match Types Tab
+        with kw_tab4:
+            st.write("### Match Type Optimization Recommendations")
+            match_recs = results.get('match_recommendations', [])
+            if match_recs and isinstance(match_recs, list):
+                match_data = []
+                for item in match_recs[:20]:
+                    match_data.append({
+                        'Keyword': item.get('keyword', 'N/A'),
+                        'Campaign': item.get('campaign', 'N/A'),
+                        'Current': item.get('current_match_type', 'N/A'),
+                        'Recommended': item.get('recommended_match_type', 'N/A'),
+                        'Reason': item.get('reason', 'N/A')[:40],
+                        'Expected Impact': item.get('expected_impact', 'N/A'),
+                        'Confidence': item.get('confidence', 'N/A')
+                    })
+                if match_data:
+                    match_df = pd.DataFrame(match_data)
+                    st.dataframe(match_df, use_container_width=True, hide_index=True)
+            else:
+                st.info("No match type recommendations")
+        
+        # Alignment Tab
+        with kw_tab5:
+            st.write("### Website-Keyword Alignment Analysis")
+            alignment = results.get('alignment_analysis', [])
+            if alignment and isinstance(alignment, list):
+                alignment_data = []
+                for item in alignment[:20]:
+                    alignment_data.append({
+                        'Keyword': item.get('keyword', 'N/A'),
+                        'Status': item.get('status', 'N/A'),
+                        'Relevance Score': f"{item.get('relevance_score', 0):.0f}%",
+                        'Suggestions': item.get('suggestions', 'None')[:50]
+                    })
+                if alignment_data:
+                    alignment_df = pd.DataFrame(alignment_data)
+                    st.dataframe(alignment_df, use_container_width=True, hide_index=True)
+            else:
+                st.info("No alignment analysis available")
+        
+        # Recommendations Tab
+        with kw_tab6:
+            st.write("### Actionable Recommendations")
+            recs = results.get('recommendations', [])
+            if recs and isinstance(recs, list):
+                for i, rec in enumerate(recs[:15], 1):
+                    keyword = rec.get('keyword', 'N/A')
+                    priority = rec.get('priority', 'Medium')
+                    action = rec.get('action', 'No action')
+                    problem = rec.get('problem', 'No problem stated')
+                    
+                    icon = "🔴" if priority == "High" else "🟡"
+                    st.info(f"**{icon} {i}. {keyword}**\n\n**Priority:** {priority}\n\n**Problem:** {problem}\n\n**Action:** {action}")
+            else:
+                st.info("No recommendations available")
         
         # Export buttons
         st.markdown("---")
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("📥 Export as JSON", key="keyword_export_json"):
-                json_str = json.dumps(results, indent=2, default=str)
-                st.download_button(
-                    label="Download JSON",
-                    data=json_str,
-                    file_name=f"keyword_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                    mime="application/json"
-                )
+            json_str = json.dumps(results, indent=2, default=str)
+            st.download_button(
+                label="📥 Download JSON",
+                data=json_str,
+                file_name=f"keyword_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json"
+            )
         
         with col2:
-            if st.button("📊 Export as Excel", key="keyword_export_excel"):
-                try:
-                    from openpyxl import Workbook
-                    
-                    wb = Workbook()
-                    ws = wb.active
-                    ws.title = "Recommendations"
-                    
-                    # Headers
-                    from openpyxl.styles import PatternFill, Font
-                    header_fill = PatternFill(start_color='667eea', end_color='667eea', fill_type='solid')
-                    header_font = Font(bold=True, color='FFFFFF')
-                    
-                    headers = ['#', 'Recommendation', 'ROI %', 'Revenue AED', 'Conversions', 'Savings AED']
-                    for col_num, header in enumerate(headers, 1):
-                        cell = ws.cell(row=1, column=col_num)
+            try:
+                from openpyxl import Workbook
+                from openpyxl.styles import PatternFill, Font, Alignment
+                
+                wb = Workbook()
+                wb.remove(wb.active)
+                
+                # Define styles
+                header_fill = PatternFill(start_color='667eea', end_color='667eea', fill_type='solid')
+                header_font = Font(bold=True, color='FFFFFF', size=12)
+                title_font = Font(bold=True, size=14)
+                
+                # Summary sheet
+                ws = wb.create_sheet('Summary', 0)
+                ws['A1'] = 'Keyword Analysis Report'
+                ws['A1'].font = title_font
+                ws.merge_cells('A1:B1')
+                
+                row = 3
+                summary_metrics = [
+                    ('Total Keywords', summary.get('total_keywords', 0)),
+                    ('Keywords with Issues', summary.get('keywords_with_issues', 0)),
+                    ('Lost Opportunities', summary.get('lost_search_opportunities', 0)),
+                    ('Match Type Conversions', summary.get('match_type_conversions_recommended', 0)),
+                    ('New Keywords Suggested', summary.get('new_keywords_suggested', 0)),
+                    ('Total Recommendations', summary.get('total_recommendations', 0))
+                ]
+                
+                for metric, value in summary_metrics:
+                    ws[f'A{row}'] = metric
+                    ws[f'A{row}'].font = Font(bold=True)
+                    ws[f'B{row}'] = value
+                    ws[f'B{row}'].alignment = Alignment(horizontal='center')
+                    row += 1
+                
+                ws.column_dimensions['A'].width = 25
+                ws.column_dimensions['B'].width = 15
+                
+                # Keyword Audit sheet
+                if results.get('audit'):
+                    ws = wb.create_sheet('Keyword Audit')
+                    headers = ['Keyword', 'Campaign', 'Issue Type', 'Severity', 'Value']
+                    for col, header in enumerate(headers, 1):
+                        cell = ws.cell(row=1, column=col)
                         cell.value = header
                         cell.fill = header_fill
                         cell.font = header_font
                     
-                    # Data
-                    for row_num, rec in enumerate(results.get('recommendations', [])[:20], 2):
-                        ws.cell(row=row_num, column=1).value = row_num - 1
-                        ws.cell(row=row_num, column=2).value = rec.get('recommendation', '')
-                        ws.cell(row=row_num, column=3).value = rec.get('estimated_roi', 0)
-                        ws.cell(row=row_num, column=4).value = rec.get('monthly_revenue_impact', 0)
-                        ws.cell(row=row_num, column=5).value = rec.get('conversions_impact', 0)
-                        ws.cell(row=row_num, column=6).value = rec.get('cost_savings', 0)
+                    for row_idx, item in enumerate(results.get('audit', [])[:100], 2):
+                        ws.cell(row=row_idx, column=1).value = item.get('keyword', '')
+                        ws.cell(row=row_idx, column=2).value = item.get('campaign', '')
+                        ws.cell(row=row_idx, column=3).value = item.get('issue_type', '')
+                        ws.cell(row=row_idx, column=4).value = item.get('severity', '')
+                        ws.cell(row=row_idx, column=5).value = item.get('value', '')
+                
+                # Lost Searches sheet
+                if results.get('lost_searches'):
+                    ws = wb.create_sheet('Lost Searches')
+                    headers = ['Keyword', 'Campaign', 'Match Type', 'Loss Type', 'Lost Searches']
+                    for col, header in enumerate(headers, 1):
+                        cell = ws.cell(row=1, column=col)
+                        cell.value = header
+                        cell.fill = header_fill
+                        cell.font = header_font
                     
-                    # Save to bytes
-                    from io import BytesIO
-                    output = BytesIO()
-                    wb.save(output)
-                    output.seek(0)
+                    for row_idx, item in enumerate(results.get('lost_searches', [])[:100], 2):
+                        ws.cell(row=row_idx, column=1).value = item.get('keyword', '')
+                        ws.cell(row=row_idx, column=2).value = item.get('campaign', '')
+                        ws.cell(row=row_idx, column=3).value = item.get('match_type', '')
+                        ws.cell(row=row_idx, column=4).value = item.get('loss_type', '')
+                        ws.cell(row=row_idx, column=5).value = item.get('potential_searches_lost', 0)
+                
+                # Match Recommendations sheet
+                if results.get('match_recommendations'):
+                    ws = wb.create_sheet('Match Types')
+                    headers = ['Keyword', 'Campaign', 'Current Type', 'Recommended Type', 'Reason', 'Expected Impact', 'Confidence']
+                    for col, header in enumerate(headers, 1):
+                        cell = ws.cell(row=1, column=col)
+                        cell.value = header
+                        cell.fill = header_fill
+                        cell.font = header_font
                     
-                    st.download_button(
-                        label="Download Excel",
-                        data=output.getvalue(),
-                        file_name=f"keyword_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-                except ImportError:
-                    st.error("Excel export requires openpyxl package")
+                    for row_idx, item in enumerate(results.get('match_recommendations', [])[:100], 2):
+                        ws.cell(row=row_idx, column=1).value = item.get('keyword', '')
+                        ws.cell(row=row_idx, column=2).value = item.get('campaign', '')
+                        ws.cell(row=row_idx, column=3).value = item.get('current_match_type', '')
+                        ws.cell(row=row_idx, column=4).value = item.get('recommended_match_type', '')
+                        ws.cell(row=row_idx, column=5).value = item.get('reason', '')
+                        ws.cell(row=row_idx, column=6).value = item.get('expected_impact', '')
+                        ws.cell(row=row_idx, column=7).value = item.get('confidence', '')
+                
+                # Recommendations sheet
+                if results.get('recommendations'):
+                    ws = wb.create_sheet('Recommendations')
+                    headers = ['Keyword', 'Priority', 'Problem', 'Action']
+                    for col, header in enumerate(headers, 1):
+                        cell = ws.cell(row=1, column=col)
+                        cell.value = header
+                        cell.fill = header_fill
+                        cell.font = header_font
+                    
+                    for row_idx, item in enumerate(results.get('recommendations', [])[:100], 2):
+                        ws.cell(row=row_idx, column=1).value = item.get('keyword', '')
+                        ws.cell(row=row_idx, column=2).value = item.get('priority', '')
+                        ws.cell(row=row_idx, column=3).value = item.get('problem', '')
+                        ws.cell(row=row_idx, column=4).value = item.get('action', '')
+                
+                # Save to bytes
+                from io import BytesIO
+                output = BytesIO()
+                wb.save(output)
+                output.seek(0)
+                
+                st.download_button(
+                    label="📊 Download Excel",
+                    data=output.getvalue(),
+                    file_name=f"keyword_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            except ImportError:
+                st.error("Excel export requires openpyxl package")
 
 # Footer
 st.markdown("---")
