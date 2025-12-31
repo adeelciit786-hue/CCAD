@@ -68,6 +68,8 @@ def convert_google_ads_keywords(df):
 def convert_google_ads_campaigns(df):
     """Convert Google Ads campaign report format to standard format."""
     try:
+        st.write(f"📋 Input columns: {list(df.columns)}")
+        
         # Mapping of Google Ads campaign columns to required columns
         column_mapping = {
             'Campaign': 'campaign_name',
@@ -83,28 +85,45 @@ def convert_google_ads_campaigns(df):
         for old_col, new_col in column_mapping.items():
             if old_col in df_converted.columns:
                 df_converted.rename(columns={old_col: new_col}, inplace=True)
+                st.write(f"  ✓ Renamed '{old_col}' → '{new_col}'")
         
         # Add date column if missing (use report date or default)
         if 'date' not in df_converted.columns:
             df_converted['date'] = pd.Timestamp.now().strftime('%Y-%m-%d')
+            st.write(f"  ✓ Added date column (auto-generated)")
         
-        # Keep only required columns
-        required_cols = ['date', 'campaign_name', 'campaign_type', 'clicks', 'impressions', 'cost', 'conversions']
-        df_converted = df_converted[[col for col in required_cols if col in df_converted.columns]]
+        # Remove totals rows (any row where campaign_name contains "Total")
+        before_count = len(df_converted)
+        if 'campaign_name' in df_converted.columns:
+            df_converted = df_converted[~df_converted['campaign_name'].astype(str).str.contains('Total', case=False, na=False)]
+            removed = before_count - len(df_converted)
+            if removed > 0:
+                st.write(f"  ✓ Removed {removed} 'Total' rows")
         
         # Clean numeric columns - remove commas and convert
         for col in ['clicks', 'impressions', 'cost', 'conversions']:
             if col in df_converted.columns:
                 df_converted[col] = df_converted[col].astype(str).str.replace(',', '')
                 df_converted[col] = pd.to_numeric(df_converted[col], errors='coerce').fillna(0)
+                st.write(f"  ✓ Cleaned numeric column '{col}'")
         
-        # Remove totals rows (any row where campaign_name contains "Total")
-        if 'campaign_name' in df_converted.columns:
-            df_converted = df_converted[~df_converted['campaign_name'].astype(str).str.contains('Total', case=False, na=False)]
+        # Keep only required columns
+        required_cols = ['date', 'campaign_name', 'campaign_type', 'clicks', 'impressions', 'cost', 'conversions']
+        available_cols = [col for col in required_cols if col in df_converted.columns]
+        df_converted = df_converted[available_cols]
+        
+        missing_cols = [col for col in required_cols if col not in available_cols]
+        if missing_cols:
+            st.warning(f"⚠️ Missing columns after conversion: {missing_cols}")
+        
+        st.write(f"✅ Final columns: {list(df_converted.columns)}")
+        st.write(f"✅ Final shape: {df_converted.shape[0]} rows × {df_converted.shape[1]} columns")
         
         return df_converted
     except Exception as e:
         st.error(f"Error converting Google Ads campaign format: {str(e)}")
+        import traceback
+        st.write(traceback.format_exc())
         return None
 
 # Configure page
@@ -236,16 +255,26 @@ if st.session_state.analysis_type == 'campaign':
                             # Check if it's Google Ads campaign format
                             if 'Campaign' in df_loaded.columns or 'Impr.' in df_loaded.columns:
                                 st.write("✅ Detected Google Ads campaign format - converting...")
+                                st.write("---")
                                 df_converted = convert_google_ads_campaigns(df_loaded)
+                                st.write("---")
                                 if df_converted is None:
                                     conversion_failed = True
+                                    st.error("❌ Conversion returned None")
                                 else:
                                     df_loaded = df_converted
+                                    st.success("✅ Conversion successful!")
+                            else:
+                                st.write(f"ℹ️ Standard format detected")
                             
-                            if not conversion_failed:
+                            if not conversion_failed and df_loaded is not None:
                                 # Save converted file
                                 df_loaded.to_csv(upload_path, index=False)
-                                st.write(f"✅ File loaded: {len(df_loaded)} campaigns")
+                                st.write(f"✅ File saved: {len(df_loaded)} rows")
+                                
+                                # Show first few rows for verification
+                                with st.expander("📊 Preview first 3 rows"):
+                                    st.dataframe(df_loaded.head(3), use_container_width=True)
                         
                         if not conversion_failed and df_loaded is not None:
                             bot = ChampionCleanersBot(str(upload_path), use_emojis=False)
@@ -255,7 +284,11 @@ if st.session_state.analysis_type == 'campaign':
                                 st.session_state.campaign_results = results
                                 st.success("✅ Analysis complete!")
                             else:
-                                st.error("Analysis failed - check file format and data")
+                                st.error("❌ Analysis failed - bot returned None")
+                                st.info("Try checking:")
+                                st.write("• Campaign names are not empty")
+                                st.write("• Numeric values are valid numbers")
+                                st.write("• At least 1 campaign is in the data")
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
                         import traceback
