@@ -147,50 +147,100 @@ if st.session_state.analysis_type == 'campaign':
             st.write("### Campaign Metrics")
             if 'campaign_metrics' in results:
                 metrics = results['campaign_metrics']
-                col1, col2, col3, col4 = st.columns(4)
                 
-                metrics_to_display = list(metrics.items())[:4]
-                for idx, (key, value) in enumerate(metrics_to_display):
-                    with [col1, col2, col3, col4][idx]:
-                        st.metric(key.replace('_', ' ').title(), f"{value:,}" if isinstance(value, (int, float)) else value)
-                
-                # Display all metrics as table
-                metrics_df = pd.DataFrame([metrics])
-                st.dataframe(metrics_df, use_container_width=True)
+                # Show each campaign's metrics
+                if isinstance(metrics, dict):
+                    for campaign_name, campaign_data in metrics.items():
+                        st.subheader(f"{campaign_name}")
+                        
+                        if isinstance(campaign_data, dict):
+                            col1, col2, col3, col4 = st.columns(4)
+                            
+                            items = list(campaign_data.items())
+                            for idx, (key, value) in enumerate(items[:4]):
+                                col = [col1, col2, col3, col4][idx % 4]
+                                with col:
+                                    if isinstance(value, (int, float)):
+                                        st.metric(key.replace('_', ' ').title(), f"{value:,.2f}" if isinstance(value, float) else f"{value:,}")
+                                    else:
+                                        st.metric(key.replace('_', ' ').title(), str(value))
+                            
+                            # Show remaining metrics if any
+                            if len(items) > 4:
+                                with st.expander("📊 More Metrics"):
+                                    metrics_df = pd.DataFrame([campaign_data])
+                                    st.dataframe(metrics_df, use_container_width=True)
         
         with res_tab2:
             st.write("### Platform Analysis")
             if 'platform_analysis' in results:
                 platform = results['platform_analysis']
-                col1, col2, col3 = st.columns(3)
-                platform_items = list(platform.items())
-                for idx, (key, value) in enumerate(platform_items[:3]):
-                    with [col1, col2, col3][idx]:
-                        st.metric(key.replace('_', ' ').title(), f"{value:,}" if isinstance(value, (int, float)) else value)
                 
-                platform_df = pd.DataFrame([platform])
-                st.dataframe(platform_df, use_container_width=True)
+                if platform and isinstance(platform, dict):
+                    for platform_name, platform_data in platform.items():
+                        st.subheader(f"{platform_name}")
+                        
+                        if isinstance(platform_data, dict):
+                            col1, col2, col3 = st.columns(3)
+                            
+                            items = list(platform_data.items())
+                            for idx, (key, value) in enumerate(items[:3]):
+                                col = [col1, col2, col3][idx % 3]
+                                with col:
+                                    if isinstance(value, (int, float)):
+                                        st.metric(key.replace('_', ' ').title(), f"{value:,.2f}" if isinstance(value, float) else f"{value:,}")
+                                    else:
+                                        st.metric(key.replace('_', ' ').title(), str(value))
+                            
+                            # Show remaining data if any
+                            if len(items) > 3:
+                                with st.expander("📊 More Platform Data"):
+                                    platform_df = pd.DataFrame([platform_data])
+                                    st.dataframe(platform_df, use_container_width=True)
+                else:
+                    st.info("No platform analysis data available")
         
         with res_tab3:
             st.write("### Device Analysis")
             if 'device_analysis' in results:
                 device = results['device_analysis']
-                col1, col2, col3 = st.columns(3)
-                device_items = list(device.items())
-                for idx, (key, value) in enumerate(device_items[:3]):
-                    with [col1, col2, col3][idx]:
-                        st.metric(key.replace('_', ' ').title(), f"{value:,}" if isinstance(value, (int, float)) else value)
                 
-                device_df = pd.DataFrame([device])
-                st.dataframe(device_df, use_container_width=True)
+                if device and isinstance(device, dict):
+                    for device_name, device_data in device.items():
+                        st.subheader(f"{device_name}")
+                        
+                        if isinstance(device_data, dict):
+                            col1, col2, col3 = st.columns(3)
+                            
+                            items = list(device_data.items())
+                            for idx, (key, value) in enumerate(items[:3]):
+                                col = [col1, col2, col3][idx % 3]
+                                with col:
+                                    if isinstance(value, (int, float)):
+                                        st.metric(key.replace('_', ' ').title(), f"{value:,.2f}" if isinstance(value, float) else f"{value:,}")
+                                    else:
+                                        st.metric(key.replace('_', ' ').title(), str(value))
+                            
+                            # Show remaining data if any
+                            if len(items) > 3:
+                                with st.expander("📊 More Device Data"):
+                                    device_df = pd.DataFrame([device_data])
+                                    st.dataframe(device_df, use_container_width=True)
+                else:
+                    st.info("No device analysis data available")
         
         with res_tab4:
             st.write("### Issues Detected")
             if 'detected_issues' in results:
                 issues = results['detected_issues']
-                if issues:
+                if isinstance(issues, list) and len(issues) > 0:
                     for i, issue in enumerate(issues, 1):
-                        st.warning(f"**{i}. {issue}**")
+                        severity = issue.get('severity', 'Medium')
+                        campaign = issue.get('campaign', 'Unknown')
+                        description = issue.get('description', 'No description')
+                        
+                        icon = "🔴" if severity == "High" else "🟡"
+                        st.warning(f"**{icon} {i}. [{severity}] {campaign}**\n\n{description}")
                 else:
                     st.success("No issues detected ✅")
         
@@ -198,9 +248,15 @@ if st.session_state.analysis_type == 'campaign':
             st.write("### Recommendations")
             if 'recommendations' in results:
                 recommendations = results['recommendations']
-                if recommendations:
+                if isinstance(recommendations, list) and len(recommendations) > 0:
                     for i, rec in enumerate(recommendations, 1):
-                        st.info(f"**{i}. {rec}**")
+                        campaign_name = rec.get('campaign_name', 'Unknown')
+                        issue = rec.get('issue_detected', 'No issue')
+                        recommendation = rec.get('recommendation', 'No recommendation')
+                        confidence = rec.get('confidence_level', 'Medium')
+                        
+                        icon = "🔴" if confidence == "High" else "🟡"
+                        st.info(f"**{icon} {i}. {campaign_name}**\n\n**Issue:** {issue}\n\n**Recommendation:** {recommendation}\n\n**Confidence:** {confidence}")
                 else:
                     st.info("No recommendations available")
         
@@ -208,70 +264,120 @@ if st.session_state.analysis_type == 'campaign':
             st.write("### Budget Allocation")
             if 'budget_allocation' in results:
                 budget = results['budget_allocation']
-                col1, col2, col3 = st.columns(3)
-                budget_items = list(budget.items())
-                for idx, (key, value) in enumerate(budget_items[:3]):
-                    with [col1, col2, col3][idx]:
-                        st.metric(key.replace('_', ' ').title(), f"{value:,}" if isinstance(value, (int, float)) else value)
                 
-                budget_df = pd.DataFrame([budget])
-                st.dataframe(budget_df, use_container_width=True)
+                if isinstance(budget, dict):
+                    # Show total budget
+                    if 'total_monthly_budget' in budget:
+                        st.metric("Total Monthly Budget", f"AED {budget['total_monthly_budget']:,.2f}")
+                    
+                    # Show allocations
+                    if 'allocations' in budget and isinstance(budget['allocations'], dict):
+                        st.subheader("Campaign Budget Allocation")
+                        
+                        alloc_data = []
+                        for campaign, alloc in budget['allocations'].items():
+                            current_pct = alloc.get('current_percentage', 0)
+                            rec_pct = alloc.get('recommended_percentage', current_pct)
+                            adjust = alloc.get('budget_adjustment', 0)
+                            
+                            alloc_data.append({
+                                'Campaign': campaign,
+                                'Current %': f"{current_pct:.1f}%",
+                                'Recommended %': f"{rec_pct:.1f}%",
+                                'Adjustment': f"{adjust:+.1f}%" if adjust != 0 else "No change"
+                            })
+                        
+                        if alloc_data:
+                            alloc_df = pd.DataFrame(alloc_data)
+                            st.dataframe(alloc_df, use_container_width=True, hide_index=True)
         
         # Export buttons
         st.markdown("---")
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("📥 Export as JSON", key="export_json"):
-                json_str = json.dumps(results, indent=2, default=str)
-                st.download_button(
-                    label="Download JSON",
-                    data=json_str,
-                    file_name=f"analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                    mime="application/json"
-                )
+            json_str = json.dumps(results, indent=2, default=str)
+            st.download_button(
+                label="📥 Download JSON",
+                data=json_str,
+                file_name=f"analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json"
+            )
         
         with col2:
-            if st.button("📊 Export as Excel", key="export_excel"):
-                try:
-                    from openpyxl import Workbook
-                    from openpyxl.styles import Font, PatternFill
+            try:
+                from openpyxl import Workbook
+                from openpyxl.styles import Font, PatternFill, Alignment
+                
+                # Create Excel workbook
+                wb = Workbook()
+                
+                # Remove default sheet
+                wb.remove(wb.active)
+                
+                # Define styles
+                header_fill = PatternFill(start_color='667eea', end_color='667eea', fill_type='solid')
+                header_font = Font(bold=True, color='FFFFFF', size=12)
+                
+                # Summary sheet
+                ws_summary = wb.create_sheet('Summary')
+                ws_summary['A1'] = 'Campaign Analysis Summary'
+                ws_summary['A1'].font = Font(bold=True, size=14)
+                
+                row = 3
+                if 'data_summary' in results:
+                    summary = results['data_summary']
+                    for key, value in summary.items():
+                        ws_summary[f'A{row}'] = key.replace('_', ' ').title()
+                        ws_summary[f'B{row}'] = value
+                        row += 1
+                
+                # Recommendations sheet
+                if 'recommendations' in results:
+                    ws_rec = wb.create_sheet('Recommendations')
                     
-                    wb = Workbook()
-                    ws = wb.active
-                    ws.title = "Analysis"
-                    
-                    # Headers
-                    header_fill = PatternFill(start_color='667eea', end_color='667eea', fill_type='solid')
-                    header_font = Font(bold=True, color='FFFFFF')
-                    
-                    headers = ['Metric', 'Value']
+                    headers = ['Campaign', 'Issue', 'Recommendation', 'Confidence']
                     for col_num, header in enumerate(headers, 1):
-                        cell = ws.cell(row=1, column=col_num)
+                        cell = ws_rec.cell(row=1, column=col_num)
                         cell.value = header
                         cell.fill = header_fill
                         cell.font = header_font
                     
-                    # Data
-                    row = 2
-                    for key, value in results.get('campaign_metrics', {}).items():
-                        ws.cell(row=row, column=1).value = key
-                        ws.cell(row=row, column=2).value = value
-                        row += 1
+                    for row_num, rec in enumerate(results['recommendations'], 2):
+                        ws_rec.cell(row=row_num, column=1).value = rec.get('campaign_name', '')
+                        ws_rec.cell(row=row_num, column=2).value = rec.get('issue_detected', '')
+                        ws_rec.cell(row=row_num, column=3).value = rec.get('recommendation', '')
+                        ws_rec.cell(row=row_num, column=4).value = rec.get('confidence_level', '')
+                
+                # Issues sheet
+                if 'detected_issues' in results:
+                    ws_issues = wb.create_sheet('Issues')
                     
-                    # Save to bytes
-                    from io import BytesIO
-                    output = BytesIO()
-                    wb.save(output)
-                    output.seek(0)
+                    headers = ['Campaign', 'Severity', 'Description']
+                    for col_num, header in enumerate(headers, 1):
+                        cell = ws_issues.cell(row=1, column=col_num)
+                        cell.value = header
+                        cell.fill = header_fill
+                        cell.font = header_font
                     
-                    st.download_button(
-                        label="Download Excel",
-                        data=output.getvalue(),
-                        file_name=f"analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-                except ImportError:
-                    st.error("Excel export requires openpyxl package")
+                    for row_num, issue in enumerate(results['detected_issues'], 2):
+                        ws_issues.cell(row=row_num, column=1).value = issue.get('campaign', '')
+                        ws_issues.cell(row=row_num, column=2).value = issue.get('severity', '')
+                        ws_issues.cell(row=row_num, column=3).value = issue.get('description', '')
+                
+                # Save to bytes
+                from io import BytesIO
+                output = BytesIO()
+                wb.save(output)
+                output.seek(0)
+                
+                st.download_button(
+                    label="📊 Download Excel",
+                    data=output.getvalue(),
+                    file_name=f"analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            except ImportError:
+                st.error("Excel export requires openpyxl package")
 
 # ==================== KEYWORD ENGINE ====================
 else:
